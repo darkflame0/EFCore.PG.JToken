@@ -11,7 +11,7 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal
 {
     class NpgsqlJTokenOptionsExtension : IDbContextOptionsExtension
     {
-        DbContextOptionsExtensionInfo _info;
+        DbContextOptionsExtensionInfo? _info;
         public virtual DbContextOptionsExtensionInfo Info
             => _info ??= new ExtensionInfo(this);
 

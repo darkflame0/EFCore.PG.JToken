@@ -29,9 +29,9 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal
 
         public override ValueConverter Converter => new JTokenConverter();
 
-        private class JTokenConverter : ValueConverter<JToken, string>
+        private class JTokenConverter : ValueConverter<JToken, string?>
         {
-            public JTokenConverter() : base(model => model.HasValues ? model.ToString(Formatting.None) : null, json => JToken.Parse(json))
+            public JTokenConverter() : base(model => model.HasValues ? model.ToString(Formatting.None) : null, json => JToken.Parse(json!))
             {
             }
         }

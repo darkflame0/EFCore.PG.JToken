@@ -39,7 +39,7 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal
             ClrTypeMappings = new ConcurrentDictionary<Type, RelationalTypeMapping>(clrTypeMappings);
         }
 
-        public RelationalTypeMapping FindMapping(in RelationalTypeMappingInfo mappingInfo)
+        public RelationalTypeMapping? FindMapping(in RelationalTypeMappingInfo mappingInfo)
         {
             var clrType = mappingInfo.ClrType;
             var storeTypeName = mappingInfo.StoreTypeName;

@@ -40,7 +40,7 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Inte
             _jsonbTypeMapping = sqlExpressionFactory.FindMapping(typeof(Newtonsoft.Json.Linq.JToken));
         }
 
-        public SqlExpression Translate(SqlExpression instance, MethodInfo method, IReadOnlyList<SqlExpression> arguments)
+        public SqlExpression? Translate(SqlExpression instance, MethodInfo method, IReadOnlyList<SqlExpression> arguments)
         {
             if ((method.DeclaringType == typeof(Newtonsoft.Json.Linq.JObject) ||
                 method.DeclaringType == typeof(Newtonsoft.Json.Linq.JToken)) &&

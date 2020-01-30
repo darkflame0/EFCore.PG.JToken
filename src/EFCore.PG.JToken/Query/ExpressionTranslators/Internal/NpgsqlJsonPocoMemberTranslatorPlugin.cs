@@ -37,7 +37,7 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Inte
             _stringTypeMapping = sqlExpressionFactory.FindMapping(typeof(string));
         }
 
-        public SqlExpression Translate(SqlExpression instance, MemberInfo member, Type returnType)
+        public SqlExpression? Translate(SqlExpression instance, MemberInfo member, Type returnType)
         {
             if (instance.TypeMapping is NpgsqlJsonTypeMapping mapping)
             {
@@ -56,7 +56,7 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Inte
                     && a.GetGenericTypeDefinition() == typeof(IDictionary<,>))) 
                     && member.Name == nameof(IDictionary.Keys))
                 {
-                    var keyType = (member as PropertyInfo).PropertyType.GetGenericArguments()[0];
+                    var keyType = (member as PropertyInfo)!.PropertyType.GetGenericArguments()[0];
                     var sub = _sqlExpressionFactory.ApplyDefaultTypeMapping(_sqlExpressionFactory.Function(
                         mapping.IsJsonb ? "jsonb_object_keys" : "json_object_keys",
                         new[] { instance }, typeof(string)));
