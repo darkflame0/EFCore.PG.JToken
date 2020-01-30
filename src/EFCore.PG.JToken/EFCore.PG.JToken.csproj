@@ -9,10 +9,12 @@
     <RepositoryUrl>https://github.com/darkflame0/EFCore.PG.JToken</RepositoryUrl>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <Nullable>enable</Nullable>
+    <VersionPrefix>1.0.0-preview1</VersionPrefix>
+    <NoWarn>EF1001</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <NoWarn>1701;1702;EF1001</NoWarn>
+    <NoWarn>1701;1702;</NoWarn>
   </PropertyGroup>
   
   <ItemGroup>

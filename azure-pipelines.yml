@@ -25,10 +25,18 @@ steps:
     packagesToPack: 'src/EFCore.PG.JToken/EFCore.PG.JToken.csproj'
     includesymbols: true
     includesource: true
-    versioningScheme: 'byPrereleaseNumber'
-    majorVersion: '1'
-    minorVersion: '0'
-    patchVersion: '0'
+    buildProperties: 'VersionSuffix="$(Build.BuildNumber)"'
+  condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/master'))
+
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet pack'
+  inputs:
+    command: 'pack'
+    packagesToPack: 'src/EFCore.PG.JToken/EFCore.PG.JToken.csproj'
+    includesymbols: true
+    includesource: true
+    versioningScheme: 'off'
+  condition: and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
 
 - task: NuGetCommand@2
   displayName: 'NuGet push'
