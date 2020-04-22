@@ -9,7 +9,7 @@
     <RepositoryUrl>https://github.com/darkflame0/EFCore.PG.JToken</RepositoryUrl>
     <!--<TreatWarningsAsErrors>true</TreatWarningsAsErrors>-->
     <Nullable>enable</Nullable>
-    <VersionPrefix>3.1.4</VersionPrefix>
+	<VersionPrefix>5.0.0-preview3</VersionPrefix>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -18,7 +18,7 @@
   
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="3.1.4" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="5.0.0-preview3" />
   </ItemGroup>
 
 </Project>
