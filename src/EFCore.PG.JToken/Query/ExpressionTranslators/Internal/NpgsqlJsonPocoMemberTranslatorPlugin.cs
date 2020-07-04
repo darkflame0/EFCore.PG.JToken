@@ -32,6 +32,13 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Inte
         private readonly NpgsqlSqlExpressionFactory _sqlExpressionFactory;
         private readonly RelationalTypeMapping _stringTypeMapping;
 
+        static readonly bool[][] TrueArrays =
+{
+            Array.Empty<bool>(),
+            new[] { true },
+            new[] { true, true }
+        };
+
         public NpgsqlJsonPocoMemberTranslator(IRelationalTypeMappingSource typeMappingSource ,NpgsqlSqlExpressionFactory sqlExpressionFactory)
         {
             _typeMappingSource = typeMappingSource;
@@ -50,6 +57,8 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Inte
                     return _sqlExpressionFactory.Function(
                        mapping.IsJsonb ? "jsonb_array_length" : "json_array_length",
                        new[] { instance },
+                       nullable: true,
+                       argumentsPropagateNullability: TrueArrays[1],
                        typeof(int));
                 }
 
@@ -63,13 +72,17 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Inte
                     var sub = _sqlExpressionFactory.ApplyDefaultTypeMapping(_sqlExpressionFactory.Function(
                         mapping.IsJsonb ? "jsonb_object_keys" : "json_object_keys",
                         new[] { instance },
+                        nullable: true,
+                        argumentsPropagateNullability: TrueArrays[1],
                         typeof(string))
                         );
 
-                    var binary = new SqlCustomBinaryExpression(_sqlExpressionFactory.Fragment("select *"), sub, "from", typeof(string), _stringTypeMapping);
+                    var binary = new PostgresUnknownBinaryExpression(_sqlExpressionFactory.Fragment("select *"), sub, "from", typeof(string), _stringTypeMapping);
                     SqlExpression r = _sqlExpressionFactory.Function(
                         "ARRAY",
                         new SqlExpression[] { binary },
+                        nullable: true,
+                        argumentsPropagateNullability: TrueArrays[1],
                         returnType);
                     if (keyType == typeof(int))
                     {
@@ -85,6 +98,8 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Inte
                 return _sqlExpressionFactory.Function(
                     "cardinality",
                     new[] { instance },
+                    nullable: true,
+                    argumentsPropagateNullability: TrueArrays[1],
                     typeof(int?));
             }
             return null;

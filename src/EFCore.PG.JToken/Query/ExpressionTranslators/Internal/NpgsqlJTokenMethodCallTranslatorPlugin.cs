@@ -61,14 +61,15 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Inte
                 // The first time we see a JSON traversal it's on a column - create a JsonTraversalExpression.
                 // Traversals on top of that get appended into the same expression.
                 return instance is ColumnExpression columnExpression
-                ? _sqlExpressionFactory.JsonTraversal(columnExpression, arguments, false, typeof(string), instance.TypeMapping)
-                : instance is JsonTraversalExpression prevPathTraversal
+                ? _sqlExpressionFactory.JsonTraversal(
+                    columnExpression, returnsText: false, typeof(string), instance.TypeMapping)
+                : instance is PostgresJsonTraversalExpression prevPathTraversal
                     ? prevPathTraversal.Append(_sqlExpressionFactory.ApplyDefaultTypeMapping(arguments[0]))
                     : null;
             }
-            if (method.Name == nameof(Newtonsoft.Json.Linq.Extensions.Value) && arguments.FirstOrDefault() is JsonTraversalExpression traversal)
+            if (method.Name == nameof(Newtonsoft.Json.Linq.Extensions.Value) && arguments.FirstOrDefault() is PostgresJsonTraversalExpression traversal)
             {
-                var traversalToText = new JsonTraversalExpression(
+                var traversalToText = new PostgresJsonTraversalExpression(
                     traversal.Expression,
                     traversal.Path,
                     returnsText: true,
