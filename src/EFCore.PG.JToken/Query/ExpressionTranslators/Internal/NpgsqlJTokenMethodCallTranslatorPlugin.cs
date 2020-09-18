@@ -14,11 +14,11 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Inte
     public class NpgsqlJTokenMethodCallTranslatorPlugin : IMethodCallTranslatorPlugin
     {
 
-        public NpgsqlJTokenMethodCallTranslatorPlugin(ISqlExpressionFactory sqlExpressionFactory)
+        public NpgsqlJTokenMethodCallTranslatorPlugin(IRelationalTypeMappingSource typeMappingSource, ISqlExpressionFactory sqlExpressionFactory)
         {
             Translators = new IMethodCallTranslator[]
             {
-                new NpgsqlJsonMethodCallTranslator((NpgsqlSqlExpressionFactory)sqlExpressionFactory)
+                new NpgsqlJsonMethodCallTranslator(typeMappingSource,(NpgsqlSqlExpressionFactory)sqlExpressionFactory)
             };
         }
 
@@ -26,18 +26,19 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Inte
     }
     public class NpgsqlJsonMethodCallTranslator : IMethodCallTranslator
     {
-
+        private readonly IRelationalTypeMappingSource _typeMappingSource;
         readonly NpgsqlSqlExpressionFactory _sqlExpressionFactory;
         readonly RelationalTypeMapping _stringTypeMapping;
         readonly RelationalTypeMapping _boolTypeMapping;
         readonly RelationalTypeMapping _jsonbTypeMapping;
 
-        public NpgsqlJsonMethodCallTranslator(NpgsqlSqlExpressionFactory sqlExpressionFactory)
+        public NpgsqlJsonMethodCallTranslator(IRelationalTypeMappingSource typeMappingSource, NpgsqlSqlExpressionFactory sqlExpressionFactory)
         {
+            _typeMappingSource = typeMappingSource;
             _sqlExpressionFactory = sqlExpressionFactory;
-            _stringTypeMapping = sqlExpressionFactory.FindMapping(typeof(string));
-            _boolTypeMapping = sqlExpressionFactory.FindMapping(typeof(bool));
-            _jsonbTypeMapping = sqlExpressionFactory.FindMapping(typeof(Newtonsoft.Json.Linq.JToken));
+            _stringTypeMapping = typeMappingSource.FindMapping(typeof(string));
+            _boolTypeMapping = typeMappingSource.FindMapping(typeof(bool));
+            _jsonbTypeMapping = typeMappingSource.FindMapping(typeof(Newtonsoft.Json.Linq.JToken));
         }
 
         public SqlExpression? Translate(SqlExpression instance, MethodInfo method, IReadOnlyList<SqlExpression> arguments)
@@ -79,7 +80,7 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Inte
                 }
                 else
                 {
-                    return _sqlExpressionFactory.Convert(traversalToText, method.ReturnType, _sqlExpressionFactory.FindMapping(method.ReturnType));
+                    return _sqlExpressionFactory.Convert(traversalToText, method.ReturnType, _typeMappingSource.FindMapping(method.ReturnType));
                 }
             }
 

@@ -9,13 +9,11 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal
 {
-    internal class JTokenTypeMapping : NpgsqlTypeMapping
+    internal class JTokenTypeMapping : NpgsqlJsonTypeMapping
     {
         public JTokenTypeMapping([NotNull] string storeType, [NotNull] Type clrType)
-            : base(storeType, clrType, storeType == "jsonb" ? NpgsqlDbType.Jsonb : NpgsqlDbType.Json)
+            : base(storeType, clrType)
         {
-            if (storeType != "json" && storeType != "jsonb")
-                throw new ArgumentException($"{nameof(storeType)} must be 'json' or 'jsonb'", nameof(storeType));
         }
 
         protected JTokenTypeMapping(RelationalTypeMappingParameters parameters, NpgsqlDbType npgsqlDbType)
