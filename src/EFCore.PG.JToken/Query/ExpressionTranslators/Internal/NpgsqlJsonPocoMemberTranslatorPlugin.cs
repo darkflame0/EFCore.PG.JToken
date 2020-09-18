@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -15,7 +17,7 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Inte
 {
     public class NpgsqlJsonPocoMemberTranslatorPlugin : IMemberTranslatorPlugin
     {
-        public NpgsqlJsonPocoMemberTranslatorPlugin(IRelationalTypeMappingSource typeMappingSource , ISqlExpressionFactory sqlExpressionFactory)
+        public NpgsqlJsonPocoMemberTranslatorPlugin(IRelationalTypeMappingSource typeMappingSource, ISqlExpressionFactory sqlExpressionFactory)
         {
             Translators = new IMemberTranslator[]
             {
@@ -39,14 +41,14 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Inte
             new[] { true, true }
         };
 
-        public NpgsqlJsonPocoMemberTranslator(IRelationalTypeMappingSource typeMappingSource ,NpgsqlSqlExpressionFactory sqlExpressionFactory)
+        public NpgsqlJsonPocoMemberTranslator(IRelationalTypeMappingSource typeMappingSource, NpgsqlSqlExpressionFactory sqlExpressionFactory)
         {
             _typeMappingSource = typeMappingSource;
             _sqlExpressionFactory = sqlExpressionFactory;
             _stringTypeMapping = typeMappingSource.FindMapping(typeof(string));
         }
 
-        public SqlExpression? Translate(SqlExpression instance, MemberInfo member, Type returnType)
+        public SqlExpression? Translate(SqlExpression instance, MemberInfo member, Type returnType, IDiagnosticsLogger<DbLoggerCategory.Query> logger)
         {
             if (instance.TypeMapping is NpgsqlJsonTypeMapping mapping)
             {
@@ -62,33 +64,63 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Inte
                        typeof(int));
                 }
 
-                if (member.DeclaringType.IsGenericType 
-                    && (member.DeclaringType.GetGenericTypeDefinition() == typeof(IDictionary<,>) 
-                    || member.DeclaringType.GetInterfaces().Any(a => a.IsGenericType 
-                    && a.GetGenericTypeDefinition() == typeof(IDictionary<,>))) 
-                    && member.Name == nameof(IDictionary.Keys))
+                if (member.DeclaringType.IsGenericType
+                    && (typeof(IDictionary<,>).IsAssignableFrom(member.DeclaringType.GetGenericTypeDefinition())
+                    || member.DeclaringType.GetInterfaces().Any(a => a.IsGenericType
+                    && a.GetGenericTypeDefinition() == typeof(IDictionary<,>)))
+                    )
                 {
-                    var keyType = (member as PropertyInfo)!.PropertyType.GetGenericArguments()[0];
-                    var sub = _sqlExpressionFactory.ApplyDefaultTypeMapping(_sqlExpressionFactory.Function(
-                        mapping.IsJsonb ? "jsonb_object_keys" : "json_object_keys",
-                        new[] { instance },
-                        nullable: true,
-                        argumentsPropagateNullability: TrueArrays[1],
-                        typeof(string))
-                        );
 
-                    var binary = new PostgresUnknownBinaryExpression(_sqlExpressionFactory.Fragment("select *"), sub, "from", typeof(string), _stringTypeMapping);
-                    SqlExpression r = _sqlExpressionFactory.Function(
-                        "ARRAY",
-                        new SqlExpression[] { binary },
-                        nullable: true,
-                        argumentsPropagateNullability: TrueArrays[1],
-                        returnType);
-                    if (keyType == typeof(int))
+                    if (member.Name == nameof(IDictionary.Keys))
                     {
-                        r = _sqlExpressionFactory.Convert(r, typeof(int[]), _typeMappingSource.FindMapping(typeof(int[])));
+                        var type = (member as PropertyInfo)!.PropertyType.GetGenericArguments()[0];
+                        var realReturnType = typeof(List<>).MakeGenericType(type);
+                        var sub = _sqlExpressionFactory.ApplyDefaultTypeMapping(_sqlExpressionFactory.Function(
+                            mapping.IsJsonb ? "jsonb_each_text" : "json_each_text",
+                            new[] { instance },
+                            nullable: true,
+                            argumentsPropagateNullability: TrueArrays[1],
+                            typeof(string))
+                            );
+
+                        var binary = new PostgresUnknownBinaryExpression(_sqlExpressionFactory.Fragment("select key"), sub, "from", typeof(string), _stringTypeMapping);
+                        var r = _sqlExpressionFactory.ApplyDefaultTypeMapping(_sqlExpressionFactory.Function(
+                            "ARRAY",
+                            new SqlExpression[] { binary },
+                            nullable: true,
+                            argumentsPropagateNullability: TrueArrays[1],
+                            typeof(string[])));
+                        if (type != typeof(string))
+                        {
+                            r = _sqlExpressionFactory.ApplyDefaultTypeMapping(_sqlExpressionFactory.Convert(r, realReturnType));
+                        }
+                        return r;
                     }
-                    return r;
+                    if (member.Name == nameof(IDictionary.Values))
+                    {
+                        var type = (member as PropertyInfo)!.PropertyType.GetGenericArguments()[0];
+                        var realReturnType = typeof(List<>).MakeGenericType(type);
+                        var sub = _sqlExpressionFactory.ApplyDefaultTypeMapping(_sqlExpressionFactory.Function(
+                            mapping.IsJsonb ? "jsonb_each_text" : "json_each_text",
+                            new[] { instance },
+                            nullable: true,
+                            argumentsPropagateNullability: TrueArrays[1],
+                            typeof(string))
+                            );
+
+                        var binary = new PostgresUnknownBinaryExpression(_sqlExpressionFactory.Fragment("select value"), sub, "from", typeof(string), _stringTypeMapping);
+                        var r = _sqlExpressionFactory.ApplyDefaultTypeMapping(_sqlExpressionFactory.Function(
+                            "ARRAY",
+                            new SqlExpression[] { binary },
+                            nullable: true,
+                            argumentsPropagateNullability: TrueArrays[1],
+                            realReturnType));
+                        if (type != typeof(string))
+                        {
+                            r = _sqlExpressionFactory.ApplyDefaultTypeMapping(_sqlExpressionFactory.Convert(r, realReturnType));
+                        }
+                        return r;
+                    }
                 }
             }
             else if (instance.TypeMapping is NpgsqlArrayTypeMapping arrayMapping
