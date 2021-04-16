@@ -11,26 +11,27 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal
         public ConcurrentDictionary<string, RelationalTypeMapping[]> StoreTypeMappings { get; }
         public ConcurrentDictionary<Type, RelationalTypeMapping> ClrTypeMappings { get; }
 
-        private readonly JTokenTypeMapping _jToken = new JTokenTypeMapping("jsonb", typeof(JToken));
+        private readonly JTokenTypeMapping _jsonb = new JTokenTypeMapping("jsonb", typeof(JToken));
+        private readonly JTokenTypeMapping _json = new JTokenTypeMapping("json", typeof(JToken));
 
         public NpgsqlJTokenTypeMappingSourcePlugin()
         {
             var clrTypeMappings = new Dictionary<Type, RelationalTypeMapping>()
             {
-                { typeof(JToken),_jToken },
+                { typeof(JToken),_jsonb },
             };
             var storeTypeMappings = new Dictionary<string, RelationalTypeMapping[]>()
             {
                 {
                     "jsonb",new RelationalTypeMapping[]
                     {
-                        new JTokenTypeMapping("jsonb", typeof(JToken))
+                        _jsonb
                     }
                 },
                 {
                     "json",new RelationalTypeMapping[]
                     {
-                        new JTokenTypeMapping("json", typeof(JToken))
+                        _json
                     }
                 }
 
