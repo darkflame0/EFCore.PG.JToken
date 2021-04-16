@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Microsoft.EntityFrameworkCore.Storage;
+using Newtonsoft.Json.Linq;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Query.Expressions.Internal;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Query.Internal;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
@@ -32,8 +33,8 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Inte
     {
         private readonly IRelationalTypeMappingSource _typeMappingSource;
         private readonly NpgsqlSqlExpressionFactory _sqlExpressionFactory;
+        private readonly NpgsqlJsonPocoTranslator _jsonPocoTranslator;
         private readonly RelationalTypeMapping _stringTypeMapping;
-
         static readonly bool[][] TrueArrays =
 {
             Array.Empty<bool>(),
@@ -45,6 +46,7 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Inte
         {
             _typeMappingSource = typeMappingSource;
             _sqlExpressionFactory = sqlExpressionFactory;
+            _jsonPocoTranslator = new NpgsqlJsonPocoTranslator(_typeMappingSource, _sqlExpressionFactory);
             _stringTypeMapping = typeMappingSource.FindMapping(typeof(string));
         }
 
@@ -52,16 +54,11 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Inte
         {
             if (instance.TypeMapping is NpgsqlJsonTypeMapping mapping)
             {
-                if ((member.DeclaringType.IsGenericCollection()
-                    && member.Name == nameof(ICollection.Count)
-                    || member.DeclaringType == typeof(Newtonsoft.Json.Linq.JArray) && member.Name == nameof(Newtonsoft.Json.Linq.JArray.Count)))
+                if (instance?.Type.IsGenericCollection() == true &&
+                    member.Name == nameof(List<object>.Count) &&
+                    instance.TypeMapping is null)
                 {
-                    return _sqlExpressionFactory.Function(
-                       mapping.IsJsonb ? "jsonb_array_length" : "json_array_length",
-                       new[] { instance },
-                       nullable: true,
-                       argumentsPropagateNullability: TrueArrays[1],
-                       typeof(int));
+                    return _jsonPocoTranslator.TranslateArrayLength(instance);
                 }
 
                 if (member.DeclaringType.IsGenericType
@@ -133,6 +130,19 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Inte
                     nullable: true,
                     argumentsPropagateNullability: TrueArrays[1],
                     typeof(int?));
+            }
+
+            if (!typeof(JToken).IsAssignableFrom(member.DeclaringType))
+            {
+                return null;
+            }
+
+            if (member.Name == nameof(JToken.Root) &&
+                instance is ColumnExpression column &&
+                column.TypeMapping is NpgsqlJsonTypeMapping)
+            {
+                // Simply get rid of the RootElement member access
+                return column;
             }
             return null;
         }
