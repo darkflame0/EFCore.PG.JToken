@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -19,11 +20,11 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Inte
     public class NpgsqlJTokenMethodCallTranslatorPlugin : IMethodCallTranslatorPlugin
     {
 
-        public NpgsqlJTokenMethodCallTranslatorPlugin(IRelationalTypeMappingSource typeMappingSource, ISqlExpressionFactory sqlExpressionFactory)
+        public NpgsqlJTokenMethodCallTranslatorPlugin(IRelationalTypeMappingSource typeMappingSource, ISqlExpressionFactory sqlExpressionFactory, IModel model)
         {
             Translators = new IMethodCallTranslator[]
             {
-                new NpgsqlJsonMethodCallTranslator(typeMappingSource,(NpgsqlSqlExpressionFactory)sqlExpressionFactory)
+                new NpgsqlJsonMethodCallTranslator(typeMappingSource,(NpgsqlSqlExpressionFactory)sqlExpressionFactory, model)
             };
         }
 
@@ -40,11 +41,11 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Inte
         readonly NpgsqlJsonPocoTranslator _jsonPocoTranslator;
         readonly RelationalTypeMapping _stringTypeMapping;
 
-        public NpgsqlJsonMethodCallTranslator(IRelationalTypeMappingSource typeMappingSource, NpgsqlSqlExpressionFactory sqlExpressionFactory)
+        public NpgsqlJsonMethodCallTranslator(IRelationalTypeMappingSource typeMappingSource, NpgsqlSqlExpressionFactory sqlExpressionFactory, IModel model)
         {
             _typeMappingSource = typeMappingSource;
             _sqlExpressionFactory = sqlExpressionFactory;
-            _jsonPocoTranslator = new NpgsqlJsonPocoTranslator(_typeMappingSource, _sqlExpressionFactory);
+            _jsonPocoTranslator = new NpgsqlJsonPocoTranslator(_typeMappingSource, _sqlExpressionFactory, model);
             _stringTypeMapping = typeMappingSource.FindMapping(typeof(string));
         }
 

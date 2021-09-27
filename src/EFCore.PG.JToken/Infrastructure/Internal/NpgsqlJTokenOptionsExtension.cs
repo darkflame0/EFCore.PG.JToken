@@ -46,10 +46,12 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal
 
             public override bool IsDatabaseProvider => false;
 
-            public override long GetServiceProviderHashCode() => 0;
+            public override int GetServiceProviderHashCode() => 0;
 
             public override void PopulateDebugInfo(IDictionary<string, string> debugInfo)
                 => debugInfo["Npgsql:" + nameof(NpgsqlJTokenDbContextOptionsBuilderExtensions.UseJTokenTranslating)] = "1";
+
+            public override bool ShouldUseSameServiceProvider(DbContextOptionsExtensionInfo other) => true;
 
             public override string LogFragment => "using JToken ";
         }

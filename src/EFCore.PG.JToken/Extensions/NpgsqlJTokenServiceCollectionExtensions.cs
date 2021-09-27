@@ -12,14 +12,10 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddEntityFrameworkNpgsqlJObject(
     this IServiceCollection serviceCollection)
         {
-
             new EntityFrameworkRelationalServicesBuilder(serviceCollection)
-                .TryAddProviderSpecificServices(
-                    x => x
-                        .TryAddSingletonEnumerable<IRelationalTypeMappingSourcePlugin, NpgsqlJTokenTypeMappingSourcePlugin>()
-                        .TryAddSingletonEnumerable<IMethodCallTranslatorPlugin, NpgsqlJTokenMethodCallTranslatorPlugin>()
-                        .TryAddSingletonEnumerable<IMemberTranslatorPlugin, NpgsqlJsonPocoMemberTranslatorPlugin>()
-                        );
+                        .TryAdd<IRelationalTypeMappingSourcePlugin, NpgsqlJTokenTypeMappingSourcePlugin>()
+                        .TryAdd<IMethodCallTranslatorPlugin, NpgsqlJTokenMethodCallTranslatorPlugin>()
+                        .TryAdd<IMemberTranslatorPlugin, NpgsqlJsonPocoMemberTranslatorPlugin>();
 
             return serviceCollection;
         }

@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -18,11 +19,11 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Inte
 {
     public class NpgsqlJsonPocoMemberTranslatorPlugin : IMemberTranslatorPlugin
     {
-        public NpgsqlJsonPocoMemberTranslatorPlugin(IRelationalTypeMappingSource typeMappingSource, ISqlExpressionFactory sqlExpressionFactory)
+        public NpgsqlJsonPocoMemberTranslatorPlugin(IRelationalTypeMappingSource typeMappingSource, ISqlExpressionFactory sqlExpressionFactory, IModel model)
         {
             Translators = new IMemberTranslator[]
             {
-                new NpgsqlJsonPocoMemberTranslator(typeMappingSource,(NpgsqlSqlExpressionFactory)sqlExpressionFactory)
+                new NpgsqlJsonPocoMemberTranslator(typeMappingSource,(NpgsqlSqlExpressionFactory)sqlExpressionFactory,model)
             };
         }
 
@@ -42,17 +43,17 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Inte
             new[] { true, true }
         };
 
-        public NpgsqlJsonPocoMemberTranslator(IRelationalTypeMappingSource typeMappingSource, NpgsqlSqlExpressionFactory sqlExpressionFactory)
+        public NpgsqlJsonPocoMemberTranslator(IRelationalTypeMappingSource typeMappingSource, NpgsqlSqlExpressionFactory sqlExpressionFactory, IModel model)
         {
             _typeMappingSource = typeMappingSource;
             _sqlExpressionFactory = sqlExpressionFactory;
-            _jsonPocoTranslator = new NpgsqlJsonPocoTranslator(_typeMappingSource, _sqlExpressionFactory);
+            _jsonPocoTranslator = new NpgsqlJsonPocoTranslator(_typeMappingSource, _sqlExpressionFactory, model);
             _stringTypeMapping = typeMappingSource.FindMapping(typeof(string));
         }
 
         public SqlExpression? Translate(SqlExpression instance, MemberInfo member, Type returnType, IDiagnosticsLogger<DbLoggerCategory.Query> logger)
         {
-            if(instance is null)
+            if (instance is null)
             {
                 return null;
             }
